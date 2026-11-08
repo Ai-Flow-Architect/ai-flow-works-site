@@ -35,6 +35,12 @@ for f in pages:
             target = os.path.join(ROOT, p, "index.html")
         if not os.path.exists(target):
             red.append(f"{f}: 参照先が無い {ref}")
+for f in pages:
+    s = open(os.path.join(ROOT, f), encoding="utf-8").read()
+    head = s[:s.find("</head>")]
+    m = re.search(r'<link rel="icon" href="([^"]*)"', head)
+    if not m:
+        red.append(f"{f}: ファビコンが無いか、href の引用符が閉じていない（後ろのHTMLを飲み込む）")
 for f in ("index.html", "premium.html"):
     s = open(os.path.join(ROOT, f), encoding="utf-8").read()
     if 'class="afw-tabs"' not in s or 'aria-current="page"' not in s:

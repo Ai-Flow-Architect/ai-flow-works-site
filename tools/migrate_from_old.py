@@ -105,7 +105,8 @@ def build_sub(name):
 def icon_link():
     """黒ページ（旧トップ）のファビコン行を取り出して全ページで使う"""
     s = open(os.path.join(SRC, "index" + ".html"), encoding="utf-8").read()
-    m = re.search(r'<link rel="icon"[^>]*>', s)
+    # href の中の SVG にも ">" があるので、href="…" を閉じ引用符まで丸ごと取る
+    m = re.search(r'<link rel="icon" href="[^"]*"[^>]*>', s)
     if not m:
         sys.exit("旧トップにファビコンが見つからない")
     return m.group(0)
