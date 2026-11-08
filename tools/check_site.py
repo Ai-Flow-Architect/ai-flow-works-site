@@ -35,6 +35,14 @@ for f in pages:
             target = os.path.join(ROOT, p, "index.html")
         if not os.path.exists(target):
             red.append(f"{f}: 参照先が無い {ref}")
+# ページ内リンク（a.html#id / #id）の行き先の id が実在するか
+for f in pages:
+    s = open(os.path.join(ROOT, f), encoding="utf-8").read()
+    for target, frag in re.findall(r'href="([^"#:]*\.html|)#([A-Za-z][\w-]*)"', s):
+        page = target or f
+        p = os.path.join(ROOT, page.lstrip("/"))
+        if os.path.exists(p) and f'id="{frag}"' not in open(p, encoding="utf-8").read():
+            red.append(f"{f}: 行き先の見出しが無い {target}#{frag}")
 for f in pages:
     s = open(os.path.join(ROOT, f), encoding="utf-8").read()
     head = s[:s.find("</head>")]

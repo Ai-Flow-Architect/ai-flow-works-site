@@ -132,7 +132,17 @@ a.s{background:#e3efff;color:#1a6fc4}</style>
 """
 
 
+def refuse_if_dirty():
+    """新サイト側に未コミットの手修正があれば止める（再実行で黙って上書きしないため）"""
+    import subprocess
+    r = subprocess.run(["git", "-C", DST, "status", "--porcelain"], capture_output=True, text=True)
+    dirty = [l for l in r.stdout.splitlines() if not l.endswith("tools/migrate_from_old.py")]
+    if r.returncode == 0 and dirty and "--force" not in sys.argv:
+        sys.exit("未コミットの変更があるため止めました（上書きすると消えます）。コミットしてから再実行するか --force:\n" + "\n".join(dirty))
+
+
 def main():
+    refuse_if_dirty()
     os.makedirs(DST, exist_ok=True)
     link = icon_link()
     w = lambda n, t: open(os.path.join(DST, n), "w", encoding="utf-8").write(ensure_icon(t, link) if n.endswith(".html") else t)
