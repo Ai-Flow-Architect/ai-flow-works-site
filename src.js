@@ -24,8 +24,15 @@
   function isAd(medium, idKey) {
     return (!!idKey && idKey !== 'fbclid') || PAID.test((medium || '').toLowerCase());
   }
-  function kind(utmSource, refHost, ad) {
-    if (ad) return '広告・' + (utmSource || 'google').toLowerCase();
+  // 広告の媒体＝utm_source。無ければクリック番号の種類から決める（fbclid＋有料の印は Meta）。
+  // どちらも無ければ「不明」＝Google の件数に混ぜない。
+  function adMedia(utmSource, idKey) {
+    if (utmSource) return utmSource.toLowerCase();
+    if (idKey === 'fbclid') return 'facebook';
+    return idKey ? 'google' : '不明';
+  }
+  function kind(utmSource, refHost, ad, idKey) {
+    if (ad) return '広告・' + adMedia(utmSource, idKey);
     var s = (utmSource || refHost || '').toLowerCase();
     if (!s) return '直接';
     if (/google|yahoo|bing|duckduckgo|ecosia|baidu/.test(s)) return '検索';
@@ -48,8 +55,8 @@
     }
     var ad = isAd(utm[1], idKey);
     return {
-      k: kind(utm[0], ref, ad), ad: ad, ref: ref, lp: location.pathname,
-      utm: utm.filter(Boolean).join('/'), term: clean(q.get('utm_term'), 60),
+      k: kind(utm[0], ref, ad, idKey), ad: ad, ref: ref, lp: location.pathname,
+      utm: utm.filter(Boolean).join('/'), camp: utm[2], term: clean(q.get('utm_term'), 60),
       id: id, idk: idKey, t: Date.now()
     };
   }
@@ -87,6 +94,7 @@
     var parts = ['流入：' + first.k, '入口：' + first.lp];
     if (first.ref) parts.push('参照元：' + first.ref);
     if (first.utm) parts.push('utm：' + first.utm);
+    if (first.camp) parts.push('キャンペーン：' + first.camp);
     if (first.term) parts.push('語：' + first.term);
     if (first.id) parts.push('id：' + first.id, 'id種類：' + first.idk);
     // 最初の入口そのものが直近の広告なら、同じ事を2度書かない。
@@ -94,6 +102,7 @@
       var a = [lastAd.k];
       if (lastAd.id) a.push(lastAd.idk + '=' + lastAd.id);
       if (lastAd.utm) a.push('utm=' + lastAd.utm);
+      if (lastAd.camp) a.push('キャンペーン=' + lastAd.camp);
       if (lastAd.term) a.push('語=' + lastAd.term);
       a.push('日=' + day(lastAd.t));
       parts.push('直近広告：' + a.join(' '));

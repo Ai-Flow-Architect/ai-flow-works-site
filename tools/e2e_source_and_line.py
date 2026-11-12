@@ -122,7 +122,12 @@ with sync_playwright() as p:
     check(v.startswith("流入：") and v.endswith(" | 送信：x") and "直近広告：" not in v, "行の形（流入が先頭・送信が末尾・最初の入口が広告なら直近広告は重ねない）")
     check(kind_of(src_line(b, "?gbraid=GB1")) == "広告・google" and kind_of(src_line(b, "?wbraid=WB1")) == "広告・google", "gbraid・wbraid だけでも広告")
     check(kind_of(src_line(b, "?utm_source=yahoo&utm_medium=cpc")) == "広告・yahoo", "utm_medium=cpc で広告（媒体は utm_source）")
-    check(kind_of(src_line(b, "?utm_medium=cpc")) == "広告・google", "utm_medium=cpc で媒体なしは google")
+    check(kind_of(src_line(b, "?utm_medium=cpc")) == "広告・不明", "有料の印だけ（媒体も番号も無い）は「広告・不明」＝Google に混ぜない")
+    v = src_line(b, "?fbclid=FB_9&utm_medium=paid")
+    check(kind_of(v) == "広告・facebook" and "id種類：fbclid" in v, "fbclid＋utm_medium=paid（媒体なし）は「広告・facebook」")
+    check(kind_of(src_line(b, "?gclid=G1&utm_medium=cpc")) == "広告・google", "gclid＋有料の印（媒体なし）は google")
+    v = src_line(b, "?gclid=G1&utm_campaign=camp1")
+    check(" | utm：camp1 | キャンペーン：camp1 | " in v, "キャンペーン名は utm の並びと別に個別の項目で載る")
     check(
         all(kind_of(src_line(b, "?utm_source=facebook&utm_medium=" + m)) == "広告・facebook" for m in ("ppc", "paid", "paid_social", "CPC")),
         "utm_medium=ppc/paid/paid_social も広告",
@@ -132,7 +137,7 @@ with sync_playwright() as p:
     check(kind_of(src_line(b, "?utm_source=facebook&utm_medium=social&fbclid=FB_9")) == "SNS", "無料の投稿（fbclid つき）は SNS")
     check(kind_of(src_line(b, "", referer="https://www.google.com/")) == "検索", "参照元が google だけなら検索")
     v = src_line(b, "?gclid=G1&utm_source=google&utm_medium=cpc&utm_campaign=a%7Cb&utm_term=%E8%87%AA%E5%8B%95%E5%8C%96%0A%E5%A4%96%E6%B3%A8")
-    check(len(v.split(" | ")) == 7 and "\n" not in v and "語：自動化 外注" in v, "値の中の | と改行は行を壊さない／検索語が載る")
+    check(len(v.split(" | ")) == 8 and "キャンペーン：a b" in v and "\n" not in v and "語：自動化 外注" in v, "値の中の | と改行は行を壊さない／検索語が載る")
 
     # 直近の広告＝最初の入口（直接）を守ったまま、後から来た広告を別に覚える
     ctx3 = b.new_context()
@@ -144,7 +149,7 @@ with sync_playwright() as p:
     pg3.goto(base + "/diagnose.html?gclid=G2&utm_source=google&utm_medium=cpc&utm_campaign=c2", wait_until="load")
     pg3.goto(base + "/index.html", wait_until="load")
     v = pg3.evaluate("AFW_SRC('x')")
-    check(kind_of(v) == "直接" and " | 直近広告：広告・google gclid=G2 utm=google/cpc/c2 日=" in v and " | id：" not in v, "最初の入口は直接のまま、直近広告を別に覚える")
+    check(kind_of(v) == "直接" and " | 直近広告：広告・google gclid=G2 utm=google/cpc/c2 キャンペーン=c2 日=" in v and " | id：" not in v, "最初の入口は直接のまま、直近広告を別に覚える")
     pg3.goto(base + "/index.html?gclid=G3", wait_until="load")
     check("直近広告：広告・google gclid=G3 日=" in pg3.evaluate("AFW_SRC('x')"), "直近広告は新しい広告で上書き")
     old = "Date.now()-31*24*3600*1000"
