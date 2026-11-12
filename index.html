@@ -134,6 +134,7 @@ footer a{color:var(--ink3)}
   gtag('js', new Date());
   gtag('config', 'G-EDE4GD3W09');
 </script>
+<script src="/src.js"></script>
 </head>
 <body>
 <div class="afw-tabs" role="navigation" aria-label="プランの切替">
@@ -389,7 +390,7 @@ footer a{color:var(--ink3)}
     var inv = document.getElementById('inv'); inv.style.display='none';
     if(!f.name.value.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())){ inv.style.display='block'; return; }
     var calcLine = '計算器：月'+document.getElementById('c-hours').value+'h×¥'+document.getElementById('c-rate').value+'×'+document.getElementById('c-cut').value+'%＝月'+document.getElementById('r-month').textContent;
-    var src = '流入：'+(document.referrer||'直接')+' '+(location.search||'');
+    var src = window.AFW_SRC ? AFW_SRC('white_catalog') : '流入：'+(document.referrer||'直接')+' '+(location.search||'');
     var body = { name:f.name.value.trim(), company:f.company.value.trim(), email:f.email.value.trim(),
       message:'【できることカタログ 事前登録】\n'+(f.message.value.trim()||'（記入なし）')+'\n'+calcLine+'\n'+src, budget:'' };
     var btn = f.querySelector('button[type=submit]'); btn.disabled = true;

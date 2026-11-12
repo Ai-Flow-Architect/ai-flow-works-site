@@ -1179,6 +1179,7 @@ select.roi-inp:focus{outline:none;border-color:var(--or);box-shadow:0 0 0 3px rg
   gtag('js', new Date());
   gtag('config', 'G-EDE4GD3W09');
 </script>
+<script src="/src.js"></script>
 </head>
 <body>
 <div class="afw-tabs" role="navigation" aria-label="プランの切替">
@@ -3330,7 +3331,7 @@ function submitForm(e){
     company:f.querySelector('[name="company"]').value,
     email:f.querySelector('[name="email"]').value,
     bizType:bizLabel,
-    message:'【お客様の区分】'+bizLabel+'\n'+f.querySelector('[name="message"]').value,
+    message:'【お客様の区分】'+bizLabel+'\n'+f.querySelector('[name="message"]').value+(window.AFW_SRC?'\n'+AFW_SRC('premium_contact'):''),
     budget:f.querySelector('[name="budget"]').value
   });
   // mode:'no-cors' は使わない。opaque応答は必ず解決するため、GASが落ちていても成功画面を

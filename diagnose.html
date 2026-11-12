@@ -119,6 +119,10 @@ a{text-decoration:none;color:inherit}
 .lead-ok .ico{font-size:2.6rem;margin-bottom:10px}
 .lead-ok h3{font-size:1.15rem;font-weight:800;margin-bottom:8px}
 .lead-ok p{font-size:.85rem;color:var(--t2);line-height:1.8}
+.line-take{margin:18px 0 22px;padding:18px 16px;border:1px solid rgba(6,199,85,.35);border-radius:14px;text-align:center;background:rgba(6,199,85,.06)}
+.line-take-h{font-weight:700;margin-bottom:6px}
+.line-take-sub{font-size:.85rem;opacity:.85;margin-bottom:14px;line-height:1.7}
+.line-take .cta-line{display:inline-block;text-decoration:none}
 .alt-cta{margin-top:6px}
 .alt-cta .cta-sub{margin-bottom:12px}
 
@@ -140,6 +144,7 @@ a{text-decoration:none;color:inherit}
   gtag('js', new Date());
   gtag('config', 'G-EDE4GD3W09');
 </script>
+<script src="/src.js"></script>
 </head>
 <body>
 <div class="hg hg1"></div>
@@ -204,6 +209,13 @@ a{text-decoration:none;color:inherit}
       <p class="roi-note" id="res-roinote"></p>
 
       <div class="prop" id="res-proposal"></div>
+
+      <!-- 集客の庭④ 診断結果をLINEで受け取る（公式LINEのトークに結果の要約を下書きで開く・送るのは本人） -->
+      <div class="line-take" id="line-take">
+        <div class="line-take-h">この結果をLINEに残す</div>
+        <div class="line-take-sub">ボタンを押すと公式LINEのトークが開き、結果の要約が入った状態になります。送信すると担当（代表）が内容を確認してお返事します。</div>
+        <a class="cta-line" id="res-line" href="https://lin.ee/6oiBlzj" target="_blank" rel="noopener" onclick="if(window.gtag){gtag('event','line_result_open',{page:'diagnose'});}">診断結果をLINEで受け取る</a>
+      </div>
 
       <div class="cta-box">
         <!-- リード獲得フォーム -->
@@ -368,6 +380,27 @@ var Diag = (function(){
     var er = $('lf-err'); if(er) er.textContent = '';
     show('screen-result');
     paintResult(res);
+    var rl = $('res-line'); if(rl) rl.href = lineUrl(res);
+  }
+
+  /* ---- 集客の庭④ 結果の要約を公式LINEのトークへ下書きで渡す ----
+     line.me/R/oaMessage は友だち追加なしでも開け、本人が送信した時だけ届く（当方から勝手に送らない）。
+     サーバーも鍵も使わない。URLが長くなりすぎないよう要約だけ（提案の全文は入れない）。 */
+  var LINE_OA_ID = '@087nomob';
+  function lineUrl(res){
+    var indLabel = '';
+    for(var i=0;i<Q[0].options.length;i++){ if(Q[0].options[i].v===answers.industry){ indLabel = Q[0].options[i].label; break; } }
+    var t = [
+      '【診断結果を受け取りたい】',
+      '判定：Lv' + res.level + ' ' + res.levelTag + '（' + res.score + '/100）',
+      '業種：' + (indLabel || '未選択'),
+      'おすすめ：' + res.recommendedPlan + '（' + res.planRange + '）',
+      '年間削減の目安：' + res.roi.annualSavingText,
+      '',
+      'この結果について相談したいです。'
+    ];
+    if(window.AFW_SRC) t.push('', AFW_SRC('diagnose_line'));
+    return 'https://line.me/R/oaMessage/' + encodeURIComponent(LINE_OA_ID) + '/?' + encodeURIComponent(t.join('\n'));
   }
 
   /* ---- 診断結果を message 文字列に整形（GAS送信用） ---- */
@@ -404,6 +437,7 @@ var Diag = (function(){
 
     var msg = '【お客様の区分】' + bizLabel + '\n\n' + composeMessage(lastRes || E.diagnose(answers));
     if(extra) msg += '\n\n── ご相談・補足 ──\n' + extra;
+    if(window.AFW_SRC) msg += '\n\n' + AFW_SRC('diagnose');
     var body = JSON.stringify({
       name: name,
       company: company,
