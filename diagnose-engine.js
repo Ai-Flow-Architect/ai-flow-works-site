@@ -99,9 +99,9 @@
       title: '初期費用の予算感は？',
       help: '無理のないプランをご提案します（見積もりは無料です）',
       options: [
-        { v: 'b_lt3', label: '〜3万円ではじめたい' },
-        { v: 'b_3_15', label: '3〜15万円' },
-        { v: 'b_gt15', label: '15万円以上でしっかり' },
+        { v: 'b_lt3', label: 'まず30分の相談（¥1,000）から' },
+        { v: 'b_3_15', label: '10〜20万円' },
+        { v: 'b_gt15', label: '20万円以上でしっかり' },
         { v: 'b_unknown', label: 'まだ分からない' }
       ]
     }
@@ -168,19 +168,19 @@
   var LEVEL_META = {
     1: {
       key: 'lite', tag: 'スモールスタート型',
-      plan: 'Lite', planRange: '¥29,000〜¥39,000',
+      plan: '30分相談からのStandard', planRange: '相談¥1,000（ご発注時に差し引き）→ ¥100,000〜',
       headline: 'まず1つ、確実に効く作業から自動化するのが最適です',
       color: '#4a8ff7'
     },
     2: {
       key: 'standard', tag: '本格自動化型',
-      plan: 'Standard', planRange: '¥40,000〜¥150,000',
+      plan: 'Standard', planRange: '¥100,000〜¥200,000',
       headline: '複数ステップをまとめて自動化すると、投資回収が早く見込めます',
       color: '#f07840'
     },
     3: {
       key: 'full', tag: '全社最適化型',
-      plan: 'Full Package', planRange: '¥150,000〜¥300,000',
+      plan: 'Full Package', planRange: '¥200,000〜',
       headline: '複数の作業を横断して仕組み化すると、削減インパクトが大きくなります',
       color: '#3dd68c'
     }
@@ -222,13 +222,13 @@
     lines.push('');
     lines.push('■ 想定される削減効果（概算）');
     lines.push('　月あたり約 ' + r.monthlySavingText + ' ／ 年間で約 ' + r.annualSavingText + ' の人件費削減が目安です。');
-    lines.push('　※月' + r.monthlyHours + '時間・時給' + yen(r.hourlyRate) + '・削減率' + Math.round(r.reductionRate * 100) + '%で試算。実数値は無料相談で精査します。');
+    lines.push('　※月' + r.monthlyHours + '時間・時給' + yen(r.hourlyRate) + '・削減率' + Math.round(r.reductionRate * 100) + '%で試算。実数値はお見積もり（無料）で精査します。');
     lines.push('');
     lines.push('■ おすすめプラン');
     lines.push('　' + meta.plan + '（' + meta.planRange + '・税込・1回限り）');
 
     if (lv === 1) {
-      lines.push('　まず1つの作業で「効く」体験をしていただき、手応えを見てから広げるのが安心です。');
+      lines.push('　まず30分の相談で効果の大きい作業を1つに絞り、そこから自動化するのが安心です。');
     } else if (lv === 2) {
       lines.push('　AI連携・複数ステップをまとめて構築でき、最もROIが高いプランです。');
     } else {
@@ -238,7 +238,7 @@
     var oRep = opt('repetition', ans.repetition);
     if (oRep && oRep.v === 'vary') {
       lines.push('');
-      lines.push('※「毎回手順が違う」作業は、まず一部の定型部分から切り出すのが効果的です。この見極めも無料相談でご一緒します。');
+      lines.push('※「毎回手順が違う」作業は、まず一部の定型部分から切り出すのが効果的です。この見極めも30分の相談（¥1,000・ご発注時に差し引き）でご一緒します。');
     }
     return lines.join('\n');
   }
