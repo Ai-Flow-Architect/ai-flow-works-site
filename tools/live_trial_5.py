@@ -1,6 +1,7 @@
 # 問4の本番試し送信5回（2026-11-23・取締役OK）。全部お名前に【テスト】。
 # 組み合わせ＝診断1（広告の目印つきURL）＋黒3（○1〜10億×6〜50人／×10億超／×1億未満〜5人・予算は3つを1回ずつ）＋白1
-# 使い方: python3 tools/live_trial_5.py <受け取るメール> [開始番号 1〜5]
+# 使い方: python3 tools/live_trial_5.py <受け取るメール> [開始番号 1〜5] [送信の間隔（秒）・既定200]
+# 🔴 受け口（GAS）は同じ宛先の短い間隔（12秒おき）の送信を、200を返しても記録しない（11/23 実測）＝間隔は既定で200秒あける
 import sys
 from playwright.sync_api import sync_playwright
 
@@ -59,6 +60,8 @@ def premium(b, i, rev, staff, bidx):
     pg.select_option(f + " [name=revenue]", rev)
     pg.select_option(f + " [name=staff]", staff)
     opts = pg.eval_on_selector_all(f + " [name=budget] option", "os=>os.map(o=>o.value).filter(Boolean)")
+    if not opts:
+        raise SystemExit("黒の予算の選択肢が0件＝フォームが変わった。送らずに止める")
     pg.select_option(f + " [name=budget]", opts[bidx % len(opts)])
     pg.click("#iform-submit-btn")
     pg.wait_for_timeout(25000)
@@ -84,7 +87,7 @@ def white(b):
 with sync_playwright() as p:
     b = p.chromium.launch()
     combos = {2: ("1〜10億", "6〜50人", 0), 3: ("10億超", "6〜50人", 1), 4: ("1億未満", "〜5人", 2)}
-    GAP = int(sys.argv[3]) if len(sys.argv) > 3 else 0   # 送信の間隔（秒）。受け口が短い間隔の同じ宛先をはじく疑い（11/23）
+    GAP = int(sys.argv[3]) if len(sys.argv) > 3 else 200   # 送信の間隔（秒）。0にすると受け口が記録しない（11/23 実測）
     import time
     for n in range(START, 6):
         if n > START and GAP:
