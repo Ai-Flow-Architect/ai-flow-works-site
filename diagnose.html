@@ -308,7 +308,15 @@ var Diag = (function(){
     });
   }
 
-  function start(){ answers = {}; idx = 0; show('screen-q'); render(); }
+  // GA4：診断を「始めた」「最後まで行った」を1ページ表示につき1回ずつ送る（gtag が無い時は何もしない）。
+  var sent = {};
+  function track(name){
+    if(sent[name]) return;
+    sent[name] = 1;
+    if(window.gtag){ gtag('event', name, {page:'diagnose'}); }
+  }
+
+  function start(){ track('diagnose_start'); answers = {}; idx = 0; show('screen-q'); render(); }
   function restart(){ start(); }
 
   function render(){
@@ -384,6 +392,7 @@ var Diag = (function(){
     var lf = $('lead-form'); if(lf) lf.reset();
     var er = $('lf-err'); if(er) er.textContent = '';
     show('screen-result');
+    track('diagnose_complete');
     paintResult(res);
     var rl = $('res-line'); if(rl) rl.href = lineUrl(res);
   }
