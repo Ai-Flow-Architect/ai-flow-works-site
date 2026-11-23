@@ -62,17 +62,21 @@ with sync_playwright() as p:
           "① FAQの答え（料金を含む）が参考として添えられる")
     check("対応可能です" in out and "確実にできるかはご状況を伺ったうえで" in out, "② 言い切りには確約でない旨の1行が付く")
 
+    mode["reply"] = "はい、スプレッドシートとの連携もできます"   # 句点なしの言い切り（2026-11-23 検査役の指摘）
+    out = ask("スプレッドシートも使えますか？")
+    check(len(calls) == 2 and "確実にできるかはご状況を伺ったうえで" in out, "② 句点なしの言い切りにも1行が付く")
+
     mode["reply"] = "業務の流れを伺えれば、最適な方法をご提案いたします。"
     out = ask("どんな業務が向いていますか？")
-    check(len(calls) == 2 and "確実にできるか" not in out, "② 言い切りの無い答えには何も足さない")
+    check(len(calls) == 3 and "確実にできるか" not in out, "② 言い切りの無い答えには何も足さない")
 
     out = ask("返金はできますか？")
-    check(len(calls) == 2, "③ 返金の質問はAIへ渡さない")
+    check(len(calls) == 3, "③ 返金の質問はAIへ渡さない")
     check("伺ったうえで" in out or "返金" in out, "③ 定型の案内が出る")
 
     mode["fail"] = True
     out = ask("Excelの集計は？", wait=3500)
-    check(len(calls) == 3, "④ AIへは渡そうとする")
+    check(len(calls) == 4, "④ AIへは渡そうとする")
     check("スプレッドシート" in out or "Excel" in out, "④ AIが落ちたらFAQの答えで受け止める")
     check(not errs, f"画面のエラーなし {errs[:2]}")
     b.close()

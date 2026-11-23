@@ -2613,7 +2613,7 @@ n8n / Zapier / Notion / Slack / LINE / Google Sheets / kintone / Lark / ChatGPT 
   const HUMAN_REPLY='その点は、お使いのツールや業務の流れを伺ったうえで正確にお答えいたします。\n\nお問い合わせフォーム（無料）からお気軽にお送りください。\n→ https://ejprriiwdcbs.jp.larksuite.com/share/base/shrjpdZI1mteYxODkourcoHZgjb';
   function needsHuman(text){return NEEDS_HUMAN.test(text);}
   // AIの答えに「できます」「可能です」等の言い切りがあれば、確約ではない旨の1行をコードで必ず足す（判断はモデルでなくコード）
-  const PROMISE_RE=/対応可能です|対応できます|対応いたします|可能です|できます[。！!]|含まれます|お約束|保証いたします|保証します/;
+  const PROMISE_RE=/対応可能|対応できます|対応いたします|可能です|可能でございます|できます(?!か)|含まれます|お約束|保証いたします|保証します/;  // 句点の有無に関わらず言い切りを拾う。「できますか」（問い）は除く（2026-11-23 検査役の指摘）
   const PROMISE_NOTE='\n\n※お使いのツールや業務の流れで変わるため、確実にできるかはご状況を伺ったうえでお答えいたします。';
   function guardPromise(t){
     if(!t)return t;
