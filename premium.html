@@ -1179,6 +1179,17 @@ select.roi-inp:focus{outline:none;border-color:var(--or);box-shadow:0 0 0 3px rg
   gtag('config', 'G-EDE4GD3W09');
 </script>
 <script src="/src.js"></script>
+<style>
+/* 問5①（2026-11-23 取締役OK）スマホで12px未満の文字をなくす。PCの見た目は変えない（640px以下だけ）。
+   検査＝tools/small_text_scan.py <URL>/premium.html --max 0（375px幅で0か所） */
+@media(max-width:640px){
+  [style*="font-size:.4"],[style*="font-size:.5"],[style*="font-size:.6"],
+  [style*="font-size:.7rem"],[style*="font-size:.70"],[style*="font-size:.72"],[style*="font-size:.73"],[style*="font-size:.74"],
+  .b-tag,.eye,.ba-box,.ba-lb,.iform-req,.iform-opt,.iform-note,.hn-l,.p-lbl,.p-period,.p-saving-hint,.ps-num,.ps-desc,
+  .ht-sep,.testi-platform,.testi-role,.sp-vs-head-bad,.sp-vs-head-good,.cert-title-text,.fdv2-log-head,.db-badge,.db-note,
+  .ft-badge,.plan-roi-badge,.cp-sub,.crd p,.fdv2-bar-r,.fdv2-bar-r strong,.db-chips span{font-size:12px!important}
+}
+</style>
 </head>
 <body>
 <div class="afw-tabs" role="navigation" aria-label="プランの切替">
@@ -2128,6 +2139,26 @@ select.roi-inp:focus{outline:none;border-color:var(--or);box-shadow:0 0 0 3px rg
         </div>
         <div class="iform-row">
           <div class="iform-field">
+            <label class="iform-label">年商 <span class="iform-req">必須</span></label>
+            <select name="revenue" class="iform-sel" required>
+              <option value="">選択してください</option>
+              <option value="1億未満">1億円未満</option>
+              <option value="1〜10億">1億〜10億円</option>
+              <option value="10億超">10億円超</option>
+            </select>
+          </div>
+          <div class="iform-field">
+            <label class="iform-label">従業員数 <span class="iform-req">必須</span></label>
+            <select name="staff" class="iform-sel" required>
+              <option value="">選択してください</option>
+              <option value="〜5人">〜5人</option>
+              <option value="6〜50人">6〜50人</option>
+              <option value="51人〜">51人〜</option>
+            </select>
+          </div>
+        </div>
+        <div class="iform-row">
+          <div class="iform-field">
             <label class="iform-label">お名前 <span class="iform-req">必須</span></label>
             <input type="text" name="name" class="iform-inp" placeholder="山田 太郎" required>
           </div>
@@ -2145,13 +2176,12 @@ select.roi-inp:focus{outline:none;border-color:var(--or);box-shadow:0 0 0 3px rg
           <textarea name="message" class="iform-ta" rows="4" placeholder="例：毎日Excelに手入力している作業を自動化したい&#10;例：問い合わせ対応に時間がかかっている&#10;例：SNS投稿を自動化したい" required></textarea>
         </div>
         <div class="iform-field">
-          <label class="iform-label">ご予算の目安 <span class="iform-opt">任意</span></label>
-          <select name="budget" class="iform-sel">
+          <label class="iform-label">初回の予算 <span class="iform-req">必須</span></label>
+          <select name="budget" class="iform-sel" required>
             <option value="">選択してください</option>
-            <option value="lite">まず30分の相談（¥1,000）</option>
-            <option value="standard">¥100,000〜¥200,000（Standardプラン）</option>
-            <option value="full">¥200,000〜（Full Package）</option>
-            <option value="undecided">まだ決めていない / まず相談したい</option>
+            <option value="10万未満">10万円未満（まず30分の相談 ¥1,000 から）</option>
+            <option value="10〜30万">10万〜30万円</option>
+            <option value="30万超">30万円超</option>
           </select>
         </div>
         <button type="submit" class="iform-btn" id="iform-submit-btn">
@@ -2576,9 +2606,23 @@ n8n / Zapier / Notion / Slack / LINE / Google Sheets / kintone / Lark / ChatGPT 
      2026-10-28: プロンプトで「推測で答えない」と指示しても gpt-4o-mini は
      「対応可能です」「初期サポートが含まれます」と言い切ることがあった（同じ質問で回ごとにぶれる）。
      判断はモデルでなくコードで行う＝該当したら定型の案内で返す。 */
-  const NEEDS_HUMAN=/納期|何日|何週間|いつまで|いつ頃|いつから|いつ始|最短|連携|連動|つなげ|繋げ|可能ですか|対応でき|[はもで]できますか|追加費用|追加料金|別料金|値引|割引|保証|無償|バグ|不具合|返金|契約|著作権|ソースコード|秘密保持|NDA/i;
+  // 2026-11-23 問5②（取締役OK）：門を「お金・契約・期日の約束」だけに狭めた。
+  //   旧：連携|つなげ|可能ですか|対応でき|できますか まで門に入れていた＝「Excelと連携できますか」等の普通の質問が
+  //   ほぼ全部AIに届かなかった（実測で試した2問とも届かず）。可否の質問はAIへ渡し、言い切りは下の guardPromise が抑える。
+  const NEEDS_HUMAN=/納期|何日|何週間|いつまで|最短|追加費用|追加料金|別料金|値引|割引|保証|無償|返金|契約|著作権|ソースコード|秘密保持|NDA/i;
   const HUMAN_REPLY='その点は、お使いのツールや業務の流れを伺ったうえで正確にお答えいたします。\n\nお問い合わせフォーム（無料）からお気軽にお送りください。\n→ https://ejprriiwdcbs.jp.larksuite.com/share/base/shrjpdZI1mteYxODkourcoHZgjb';
   function needsHuman(text){return NEEDS_HUMAN.test(text);}
+  // AIの答えに「できます」「可能です」等の言い切りがあれば、確約ではない旨の1行をコードで必ず足す（判断はモデルでなくコード）
+  const PROMISE_RE=/対応可能です|対応できます|対応いたします|可能です|できます[。！!]|含まれます|お約束|保証いたします|保証します/;
+  const PROMISE_NOTE='\n\n※お使いのツールや業務の流れで変わるため、確実にできるかはご状況を伺ったうえでお答えいたします。';
+  function guardPromise(t){
+    if(!t)return t;
+    return (PROMISE_RE.test(t)&&!t.includes('伺ったうえで'))?t+PROMISE_NOTE:t;
+  }
+  // AIへ渡す時は、取締役が書いたFAQの答えも参考として添える（FAQの範囲を超えて約束させない）
+  function sysWithFaq(){
+    return SYS+'\n\n【よくある質問の答え（参考。ここに無い事は推測で答えない）】\n'+FAQ_DB.map(f=>'・'+f.ans).join('\n');
+  }
 
   /* ---- 質問判定：「？」か質問ワードを含むか ---- */
   function isQuestion(text){
@@ -2991,7 +3035,7 @@ n8n / Zapier / Notion / Slack / LINE / Google Sheets / kintone / Lark / ChatGPT 
     inpRow.style.display='flex';
     addMsg('ご自由にご質問ください。どんな内容でもお答えします！😊\n診断に戻りたい場合は「やり直し」と入力してください。');
     if(!history.some(m=>m.role==='system')){
-      history.push({role:'system',content:SYS});
+      history.push({role:'system',content:sysWithFaq()});
     }
     updateNav();
   }
@@ -3063,18 +3107,13 @@ n8n / Zapier / Notion / Slack / LINE / Google Sheets / kintone / Lark / ChatGPT 
         inpRow.style.display='none'; // [Fix#11] 二重入力防止：質問処理中はinput非表示
         showTyping();
         const reShow=makeReShow(step); // [Fix#10] この時点のstepを確定保持
-        const faqAns=staticFAQ(text);
-        if(faqAns){
-          setTimeout(()=>{
-            removeTyping();addMsg(faqAns);
-            setTimeout(()=>reShow(),900);
-          },600);
-        } else {
-          const llmReply=needsHuman(text)?HUMAN_REPLY:await callLLM([{role:'system',content:SYS},{role:'user',content:text}],450);
-          removeTyping();
-          addMsg(llmReply||'詳しくはお問い合わせフォームからどうぞ！😊');
-          setTimeout(()=>reShow(),900);
-        }
+        // 2026-11-23 問5②：順番を「門 → AI → FAQ（AIが落ちた時）」へ。旧は FAQ が先でAIに届かなかった
+        const llmReply=needsHuman(text)
+          ?(staticFAQ(text)||HUMAN_REPLY)
+          :(guardPromise(await callLLM([{role:'system',content:sysWithFaq()},{role:'user',content:text}],450))||staticFAQ(text));
+        removeTyping();
+        addMsg(llmReply||'詳しくはお問い合わせフォームからどうぞ！😊');
+        setTimeout(()=>reShow(),900);
         return;
       }
       // 回答として処理→次ステップへ
@@ -3099,7 +3138,7 @@ n8n / Zapier / Notion / Slack / LINE / Google Sheets / kintone / Lark / ChatGPT 
     showTyping();
     // ① LLM呼び出し（OpenAI → Gemini）
     // 門に当たっても、取締役が書いたFAQに答えがあればそれを返す（質問判定ルートと同じ順＝FAQ→門→LLM）
-    let reply=needsHuman(text)?(staticFAQ(text)||HUMAN_REPLY):await callLLM(history,450);
+    let reply=needsHuman(text)?(staticFAQ(text)||HUMAN_REPLY):guardPromise(await callLLM(history,450));
     // [Fix#3] 不満カウンター：LLM応答の有無に関わらず先にカウント・エスカレート
     const frustrationWords=/使えない|最悪|最低|ひどい|だめ|無駄|高すぎ|信用できない|絶対失敗/;
     if(frustrationWords.test(text)){
@@ -3322,14 +3361,19 @@ function submitForm(e){
   var f=document.getElementById('contact-form');
   var bizSel=f.querySelector('[name="bizType"]');
   var bizLabel=bizSel&&bizSel.selectedIndex>0?bizSel.options[bizSel.selectedIndex].text:'';
+  // 入口の関門（2026-11-23 問2）：取込み側 inbound_lead_ingest.GATE_FIELDS と同じ文字で本文へ3行。
+  // 受け口（GAS）は触らない＝予算の列へは今までの4つの値のどれかだけを送る（知らない値を送らない）
+  var rev=f.querySelector('[name="revenue"]').value, staff=f.querySelector('[name="staff"]').value;
+  var fb=f.querySelector('[name="budget"]').value;
+  var GAS_BUDGET={'10万未満':'lite','10〜30万':'standard','30万超':'full'};
   // GAS側が未知フィールドを捨てても区分が必ず届くよう、message の先頭にも同じ値を入れる
   var body=JSON.stringify({
     name:f.querySelector('[name="name"]').value,
     company:f.querySelector('[name="company"]').value,
     email:f.querySelector('[name="email"]').value,
     bizType:bizLabel,
-    message:'【お客様の区分】'+bizLabel+'\n'+f.querySelector('[name="message"]').value+(window.AFW_SRC?'\n'+AFW_SRC('premium_contact'):''),
-    budget:f.querySelector('[name="budget"]').value
+    message:'【お客様の区分】'+bizLabel+'\n【年商】'+rev+'\n【従業員数】'+staff+'\n【初回の予算】'+fb+'\n'+f.querySelector('[name="message"]').value+(window.AFW_SRC?'\n'+AFW_SRC('premium_contact'):''),
+    budget:GAS_BUDGET[fb]||'undecided'
   });
   // mode:'no-cors' は使わない。opaque応答は必ず解決するため、GASが落ちていても成功画面を
   // 出してリードを無言で捨てる（3月〜7月の実障害と同一構造）。Content-Type: text/plain なら

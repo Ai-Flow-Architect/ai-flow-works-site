@@ -245,13 +245,34 @@ footer a{color:var(--ink3)}
       <input id="f-name" name="name" type="text" required autocomplete="name">
       <label for="f-company">会社名・屋号</label>
       <input id="f-company" name="company" type="text" autocomplete="organization">
+      <label for="f-rev">年商 <span style="color:#c0392b">*</span></label>
+      <select id="f-rev" name="revenue" required>
+        <option value="">選択してください</option>
+        <option value="1億未満">1億円未満</option>
+        <option value="1〜10億">1億〜10億円</option>
+        <option value="10億超">10億円超</option>
+      </select>
+      <label for="f-staff">従業員数 <span style="color:#c0392b">*</span></label>
+      <select id="f-staff" name="staff" required>
+        <option value="">選択してください</option>
+        <option value="〜5人">〜5人</option>
+        <option value="6〜50人">6〜50人</option>
+        <option value="51人〜">51人〜</option>
+      </select>
+      <label for="f-budget">初回の予算 <span style="color:#c0392b">*</span></label>
+      <select id="f-budget" name="firstBudget" required>
+        <option value="">選択してください</option>
+        <option value="10万未満">10万円未満</option>
+        <option value="10〜30万">10万〜30万円</option>
+        <option value="30万超">30万円超</option>
+      </select>
       <label for="f-email">メールアドレス <span style="color:#c0392b">*</span></label>
       <input id="f-email" name="email" type="email" required autocomplete="email">
       <label for="f-msg">困っている作業・気になった見本の番号</label>
       <textarea id="f-msg" name="message" rows="4" placeholder="例：注文のコピペ（見本 2-ec-order-merge）。月20時間くらい。"></textarea>
       <p class="hint">送信後、2営業日以内に返信します。営業電話はしません。</p>
       <button class="btn btn-p" type="submit" style="margin-top:16px;width:100%;justify-content:center">送信する</button>
-      <div class="ok" id="inv" style="background:#fdecea">お名前とメールアドレスを確認してください。</div>
+      <div class="ok" id="inv" style="background:#fdecea">お名前・メールアドレス・年商・従業員数・初回の予算を確認してください。</div>
       <div class="ok" id="ok">ありがとうございます。2営業日以内にメールで返信します。</div>
       <div class="ok" id="ng" style="background:#fdecea">送信できませんでした。お手数ですが <a href="premium.html#contact">お問い合わせフォーム</a> からお願いします。</div>
     </form>
@@ -388,11 +409,14 @@ footer a{color:var(--ink3)}
     var f = e.target, ok = document.getElementById('ok'), ng = document.getElementById('ng');
     ok.style.display = ng.style.display = 'none';
     var inv = document.getElementById('inv'); inv.style.display='none';
-    if(!f.name.value.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())){ inv.style.display='block'; return; }
+    if(!f.name.value.trim() || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())
+       || !f.revenue.value || !f.staff.value || !f.firstBudget.value){ inv.style.display='block'; return; }
+    // 入口の関門（2026-11-23 問2）：取込み側 inbound_lead_ingest.GATE_FIELDS と同じ文字で本文へ3行
+    var gate = '【年商】'+f.revenue.value+'\n【従業員数】'+f.staff.value+'\n【初回の予算】'+f.firstBudget.value;
     var calcLine = '計算器：月'+document.getElementById('c-hours').value+'h×¥'+document.getElementById('c-rate').value+'×'+document.getElementById('c-cut').value+'%＝月'+document.getElementById('r-month').textContent;
     var src = window.AFW_SRC ? AFW_SRC('white_catalog') : '流入：'+(document.referrer||'直接')+' '+(location.search||'');
     var body = { name:f.name.value.trim(), company:f.company.value.trim(), email:f.email.value.trim(),
-      message:'【できることカタログ 事前登録】\n'+(f.message.value.trim()||'（記入なし）')+'\n'+calcLine+'\n'+src, budget:'' };
+      message:'【できることカタログ 事前登録】\n'+gate+'\n'+(f.message.value.trim()||'（記入なし）')+'\n'+calcLine+'\n'+src, budget:'' };
     var btn = f.querySelector('button[type=submit]'); btn.disabled = true;
     // no-cors は使わない（応答が読めず、受け口が落ちていても成功表示になる＝3〜7月の実障害と同型）
     fetch(GAS_ENDPOINT, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(body)})

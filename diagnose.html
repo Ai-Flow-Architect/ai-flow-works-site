@@ -238,6 +238,24 @@ a{text-decoration:none;color:inherit}
               <div style="font-size:.68rem;color:var(--t3);line-height:1.6;margin-top:6px">このフォームからのお申し込みは、法人・個人事業主のお客様に限らせていただいております。事業としてではなく個人でご利用の場合は <a href="https://coconala.com/users/3197520" target="_blank" rel="noopener" style="color:var(--or)">ココナラ</a> より同じ内容を承ります。</div>
             </div>
             <div class="lf-field">
+              <label class="lf-label" for="lf-rev">年商<span class="req">必須</span></label>
+              <select class="lf-select" id="lf-rev" name="revenue" required>
+                <option value="">選択してください</option>
+                <option value="1億未満">1億円未満</option>
+                <option value="1〜10億">1億〜10億円</option>
+                <option value="10億超">10億円超</option>
+              </select>
+            </div>
+            <div class="lf-field">
+              <label class="lf-label" for="lf-staff">従業員数<span class="req">必須</span></label>
+              <select class="lf-select" id="lf-staff" name="staff" required>
+                <option value="">選択してください</option>
+                <option value="〜5人">〜5人</option>
+                <option value="6〜50人">6〜50人</option>
+                <option value="51人〜">51人〜</option>
+              </select>
+            </div>
+            <div class="lf-field">
               <label class="lf-label" for="lf-name">お名前<span class="req">必須</span></label>
               <input class="lf-input" id="lf-name" name="name" type="text" placeholder="例：山田 太郎" autocomplete="name" required>
             </div>
@@ -299,7 +317,13 @@ var Diag = (function(){
   // 既存LP問い合わせフォームと同一の公開GASエンドポイント（Lark通知+CRM記録+自動返信を実行）
   var GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyN_zdve66TxQl8R6g4wj2vm2fBobxoHEV_C2CQ1S176xlmCtPI7LdUbbNT2fO_olN1/exec';
   // Q8予算 → 既存GASのbudgetラベルキーへマップ
-  var BUDGET_MAP = { b_lt3:'lite', b_3_15:'standard', b_gt15:'full', b_unknown:'undecided' };
+  // 受け口（GAS）は触らない＝今までの4つの値のどれかだけを送る（2026-11-23 予算を関門の3択へ）
+  var BUDGET_MAP = { b_lt10:'lite', b_10_30:'standard', b_gt30:'full' };
+  function budgetGate(){
+    var q = Q.filter(function(x){ return x.id === 'budget'; })[0];
+    var o = q && q.options.filter(function(x){ return x.v === answers.budget; })[0];
+    return o ? o.gate : '';
+  }
 
   var $ = function(id){ return document.getElementById(id); };
   function show(screen){
@@ -445,11 +469,16 @@ var Diag = (function(){
     var err = $('lf-err');
     // バリデーション（form に novalidate があるため required 属性では止まらない。ここで止める）
     if(!bizLabel){ err.textContent = 'お客様の区分をお選びください。'; bizSel.focus(); return; }
+    var rev = $('lf-rev').value, staff = $('lf-staff').value;
+    if(!rev){ err.textContent = '年商をお選びください。'; $('lf-rev').focus(); return; }
+    if(!staff){ err.textContent = '従業員数をお選びください。'; $('lf-staff').focus(); return; }
     if(!name){ err.textContent = 'お名前をご入力ください。'; $('lf-name').focus(); return; }
     if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ err.textContent = '正しいメールアドレスをご入力ください。'; $('lf-email').focus(); return; }
     err.textContent = '';
 
-    var msg = '【お客様の区分】' + bizLabel + '\n\n' + composeMessage(lastRes || E.diagnose(answers));
+    // 入口の関門（2026-11-23 問2）：取込み側 inbound_lead_ingest.GATE_FIELDS と同じ文字で3行
+    var msg = '【お客様の区分】' + bizLabel + '\n【年商】' + rev + '\n【従業員数】' + staff
+      + '\n【初回の予算】' + budgetGate() + '\n\n' + composeMessage(lastRes || E.diagnose(answers));
     if(extra) msg += '\n\n── ご相談・補足 ──\n' + extra;
     if(window.AFW_SRC) msg += '\n\n' + AFW_SRC('diagnose');
     var body = JSON.stringify({

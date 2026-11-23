@@ -77,6 +77,8 @@ with sync_playwright() as p:
     check(len(href) < 2000, f"URLの長さ {len(href)} < 2000")
 
     pg.select_option("#lf-biz", index=1)
+    pg.select_option("#lf-rev", index=2)     # 入口の関門（2026-11-23）。中身の検査は e2e_gate_fields.py
+    pg.select_option("#lf-staff", index=2)
     pg.fill("#lf-name", "【テスト】甲野")
     pg.fill("#lf-email", "test@example.invalid")
     pg.click("#lf-submit")
@@ -88,6 +90,8 @@ with sync_playwright() as p:
     pg.goto(base + "/index.html", wait_until="load")
     pg.fill("#form [name=name]", "【テスト】乙野")
     pg.fill("#form [name=email]", "test@example.invalid")
+    for nm in ("revenue", "staff", "firstBudget"):
+        pg.select_option(f"#form [name={nm}]", index=2)
     pg.click("#form button[type=submit]")
     pg.wait_for_timeout(1500)
     check(len(bodies) == 2 and "流入：広告・google" in bodies[-1] and "入口：/diagnose.html" in bodies[-1], "白フォームは最初の入口を保つ")
@@ -101,6 +105,8 @@ with sync_playwright() as p:
     bt = pg.locator(f + " [name=bizType]")
     if bt.count():
         bt.select_option(index=1)
+    for nm in ("revenue", "staff", "budget"):
+        pg.select_option(f + f" [name={nm}]", index=2)
     pg.click("#iform-submit-btn")
     pg.wait_for_timeout(1500)
     check(len(bodies) == 3 and "送信：premium_contact" in bodies[-1], "黒フォームの本文に流入の1行")
@@ -173,6 +179,8 @@ with sync_playwright() as p:
         pg3.click("#btn-next")
     check(pg3.is_visible("#screen-result") and not errs3 and events(pg3) == [], "gtag が無くても診断は最後まで進み、何も送らない")
     pg3.select_option("#lf-biz", index=1)
+    pg3.select_option("#lf-rev", index=2)
+    pg3.select_option("#lf-staff", index=2)
     pg3.fill("#lf-name", "【テスト】丁野")
     pg3.fill("#lf-email", "test@example.invalid")
     pg3.click("#lf-submit")
