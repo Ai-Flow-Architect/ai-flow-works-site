@@ -15,6 +15,7 @@ def open_page(b, path):
     pg = ctx.new_page()
     sent = []
     pg.on("request", lambda r: sent.append(r.post_data or "") if "script.google.com/macros" in r.url and r.method == "POST" else None)
+    pg.on("response", lambda r: print("   受け口の返事", r.status, r.url[:60], flush=True) if "script.google" in r.url or "googleusercontent" in r.url else None)
     # フォームに関係ない外部（グラフ・フォント・計測）は止める＝ミニPCのChromiumで読み込みが終わらず時間切れになったため（11/23 実測）
     pg.route("**/*", lambda r: r.abort() if any(h in r.request.url for h in ("cdn.jsdelivr.net", "fonts.g", "googletagmanager")) else r.continue_())
     pg.goto(BASE + path, wait_until="commit", timeout=60000)
@@ -43,7 +44,7 @@ def diagnose(b):
     pg.select_option("#lf-rev", "1〜10億")
     pg.select_option("#lf-staff", "6〜50人")
     pg.click("#lf-submit")
-    pg.wait_for_timeout(12000)
+    pg.wait_for_timeout(25000)
     report("1 診断・広告", sent)
     ctx.close()
 
@@ -60,7 +61,7 @@ def premium(b, i, rev, staff, bidx):
     opts = pg.eval_on_selector_all(f + " [name=budget] option", "os=>os.map(o=>o.value).filter(Boolean)")
     pg.select_option(f + " [name=budget]", opts[bidx % len(opts)])
     pg.click("#iform-submit-btn")
-    pg.wait_for_timeout(12000)
+    pg.wait_for_timeout(25000)
     report(f"{i} 黒 {rev}×{staff}", sent)
     ctx.close()
 
@@ -75,7 +76,7 @@ def white(b):
     fb = pg.eval_on_selector_all("#form [name=firstBudget] option", "os=>os.map(o=>o.value).filter(Boolean)")
     pg.select_option("#form [name=firstBudget]", fb[0])
     pg.click("#form button[type=submit]")
-    pg.wait_for_timeout(12000)
+    pg.wait_for_timeout(25000)
     report("5 白", sent)
     ctx.close()
 
@@ -83,7 +84,11 @@ def white(b):
 with sync_playwright() as p:
     b = p.chromium.launch()
     combos = {2: ("1〜10億", "6〜50人", 0), 3: ("10億超", "6〜50人", 1), 4: ("1億未満", "〜5人", 2)}
+    GAP = int(sys.argv[3]) if len(sys.argv) > 3 else 0   # 送信の間隔（秒）。受け口が短い間隔の同じ宛先をはじく疑い（11/23）
+    import time
     for n in range(START, 6):
+        if n > START and GAP:
+            time.sleep(GAP)
         if n == 1:
             diagnose(b)
         elif n in combos:
